@@ -1,4 +1,4 @@
-import { EMAIL_CHANGED, PASSWORD_CHANGED, LOGIN_USER_SUCCESS } from './types';
+import { EMAIL_CHANGED, PASSWORD_CHANGED, LOGIN_USER_SUCCESS, LOGIN_USER_FAIL, LOGIN_USER } from './types';
 import firebase from 'firebase';
 
 export const emailChanged = (text) => {
@@ -17,9 +17,30 @@ export const passwordChanged = (text) => {
 
 export const loginUser = ({ email, password }) => {
   return (dispatch) => {
+    dispatch({ type: LOGIN_USER });
+
     firebase.auth().signInWithEmailAndPassword(email, password)
-      .then(user => {
-        dispatch({ type: 'LOGIN_USER_SUCCESS', payload: user });
+      .then(user => loginUserSuccess(dispatch, user))
+      .catch(() => {
+
+        firebase.auth().createUserWithEmailAndPassword(email, password)
+          .then(user => loginUserSuccess(dispatch, user))
+          .catch((err) => loginUserFail(dispatch, err.message));
       });
   };
+};
+
+const loginUserSuccess = (dispatch, user) => {
+  dispatch({
+    type: LOGIN_USER_SUCCESS,
+    payload: user
+  });
+};
+
+const loginUserFail = (dispatch, error) => {
+  console.log('Only this code runs not the AuthReducer');
+  dispatch({
+    type: LOGIN_USER_FAIL,
+    payload: error
+  });
 };
